@@ -1,4 +1,5 @@
 import os
+from time import sleep
 
 import telebot
 import gspread
@@ -65,14 +66,14 @@ def is_valid_url(url: str = "") -> bool:
 
 def convert_date(date: str = "01/01/00"):
     """Конвертируем дату из строки в datetime"""
-    # PUT YOUR CODE HERE
-    pass
+    day, month, year = date.split("/")
+    return datetime(int('20' + year), int(month), int(day))
 
 
 def connect_table(message):
     """Подключаемся к Google-таблице"""
     url = message.text
-    sheet_id =  # Нужно извлечь id страницы из ссылки на Google-таблицу
+    sheet_id = url.split('spreadsheets/d/')[1].split('/edit')[0]
     try:
         with open("tables.json") as json_file:
             tables = json.load(json_file)
@@ -83,19 +84,24 @@ def connect_table(message):
     with open("tables.json", "w") as json_file:
         json.dump(tables, json_file)
     bot.send_message(message.chat.id, "Таблица подключена!")
-
+    sleep(2)
+    start(message)
 
 def access_current_sheet():
     """Обращаемся к Google-таблице"""
-    with open("tables.json") as json_file:
-        tables = json.load(json_file)
+    try:
+        with open("tables.json") as json_file:
+            tables = json.load(json_file)
 
-    sheet_id = tables[max(tables)]["id"]
-    gc = gspread.service_account(filename="credentials.json")
-    sh = gc.open_by_key(sheet_id)
-    worksheet = sh.sheet1
-    # Преобразуем Google-таблицу в таблицу pandas
-    return worksheet, tables[max(tables)]["url"], df
+        sheet_id = tables[str(max(map(int, tables.keys())))]["id"]
+        gc = gspread.service_account(filename="my_credentials.json")
+        sh = gc.open_by_key(sheet_id)
+        worksheet = sh.sheet1
+        ws_values = worksheet.get_all_values()
+        df = pd.DataFrame.from_records(ws_values[1:], columns=ws_values[0])
+        return worksheet, tables[str(max(map(int, tables.keys())))]["url"], df
+    except FileNotFoundError:
+        return None
 
 
 def choose_action(message):
