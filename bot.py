@@ -27,15 +27,41 @@ def is_valid_date(date: str = "01/01/00", divider: str = "/") -> bool:
     - может быть сегодняшним числом
     - пользователь не должен быть обязан вводить конкретный формат даты
     (например, только через точку или только через слеш)"""
-    # PUT YOUR CODE HERE
-    pass
+    # Пробуем преобразовать строку даты в объект datetime
+    try:
+        deadline_date = datetime.strptime(date, f"%d{divider}%m{divider}%y")
+    except ValueError:
+        return False
+
+    # Получаем текущую дату и время
+    now = datetime.today()
+
+    # Проверяем, что дата не может быть до текущей
+    if deadline_date + timedelta(days=now.day, hours=now.hour, minutes=now.minute + 1) < now:
+        return False
+
+    # Проверяем, что дата не может быть позже, чем через год
+    if deadline_date > now + timedelta(days=365):
+        return False
+
+    return True
 
 
 def is_valid_url(url: str = "") -> bool:
     """Проверяем, что ссылка рабочая"""
-    # PUT YOUR CODE HERE
-    pass
+    regex = r"^(https?://|www\.)\S*\.ru$"
+    if re.match(regex, url):
+        return True
 
+    regex = r"^en\S*\.[a-z]+\.[a-z]{2,3}$"
+    if re.match(regex, url):
+        return False
+
+    regex = r"^\S*\.ru$"
+    if re.match(regex, url):
+        return True
+
+    return False
 
 def convert_date(date: str = "01/01/00"):
     """Конвертируем дату из строки в datetime"""
